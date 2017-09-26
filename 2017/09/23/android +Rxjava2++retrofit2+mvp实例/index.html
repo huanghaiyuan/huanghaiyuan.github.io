@@ -1,0 +1,395 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+	<link rel="bookmark"  type="image/x-icon"  href="/img/head.jpg"/>
+	 <link rel="shortcut icon" href="/img/head.jpg">
+	
+			
+    <title>
+    huanghaiyuan's blog
+    </title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="/css/mic_main.css" />
+    <link rel="stylesheet" href="/css/dropdownMenu.css" />
+    
+    	<script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+	
+    <noscript>
+        <link rel="stylesheet" href="/css/noscript.css" />
+    </noscript>
+
+			    <script src="/js/jquery.min.js"></script>
+    <script src="/js/jquery.scrollex.min.js"></script>
+    <script src="/js/jquery.scrolly.min.js"></script>
+    <script src="/js/skel.min.js"></script>
+    <script src="/js/util.js"></script>
+    <script src="/js/main.js"></script>
+	
+</head>
+    
+		
+<!-- Layouts -->
+
+
+
+<!--  代码渲染  -->
+<link rel="stylesheet" href="/css/prism_coy.css" />
+<link rel="stylesheet" href="/css/typo.css" />
+<!-- 文章页 -->
+<body class="is-loading">
+    <!-- Wrapper 外包 s-->
+    <div id="wrapper" class="fade-in">
+        <!-- Intro 头部显示 s -->
+        <!-- Intro 头部显示 e -->
+        <!-- Header 头部logo start -->
+        <header id="header">
+    <a href="/" class="logo">HuangHaiYuan</a>
+</header>
+        <!-- Nav 导航条 start -->
+        <nav id="nav" class="special" >
+            <ul class="menu links" >
+			<!-- Homepage  主页  --> 
+			<li >
+	            <a href="/" rel="nofollow">主页</a>
+	        </li>
+			<!-- categories_name  分类   --> 
+	        
+	        <li class="active">
+	            <a href="#s1">分类</a>
+	                    <ul class="submenu">
+	                        <li>
+	                        <a class="category-link" href="/categories/技术/">技术</a></li><li><a class="category-link" href="/categories/生活/">生活</a>
+	                    </ul>
+	        </li>
+	        
+	        <!-- archives  归档   --> 
+	        
+	        
+		        <!-- Pages 自定义   -->
+		        
+		        <li>
+		            <a href="/about/" title="我的">
+		                我的
+		            </a>
+		        </li>
+		        
+
+
+            </ul>
+            <!-- icons 图标   -->
+			<ul class="icons">
+		            
+		                <li><a href="https://github.com/huanghaiyuan" class="icon fa-github"><span class="label">GitHub</span></a></li>
+		            
+		            
+		            
+		            
+			</ul>
+</nav>
+
+        <div id="main" >
+            <div class ="post_page_title_img" style="height: 25rem;background-image: url(http://upload-images.jianshu.io/upload_images/1638147-3bdcbadfccbbe0f3.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240);background-position: center; background-repeat:no-repeat; background-size:cover;-moz-background-size:cover;overflow:hidden;" >
+                <a href="#" style="padding: 4rem 4rem 2rem 4rem ;"><h2 >android rxjava2+retrofit2+mvp搭建项目架构</h2></a>
+            </div>
+            <!-- Post -->
+            <div class="typo" style="padding: 3rem;">
+                <p><strong>rx系列</strong> 说白就是解决的Android <strong>异步</strong>，最近更新到了第二版本<br>，相比较于第一版本改动很大，有兴趣的读者可自行了解。</p>
+<p><strong>retrofit</strong> 是基于okhttp3的一个网络请求框架，正所谓大厂出品，质量保证</p>
+<p><strong>mvp</strong>可谓是继mvc框架后一个流行的架构，其低耦合，高性能，容易单元测试，当然因为频繁使用观察者模式所以代码深度比较高。</p>
+<p>因为最近再做这方面的集成所以写了一个demo和各位分享下，请多多指教。<br>咱们直接上代码：<br>先添加依赖：<br>    compile ‘io.reactivex.rxjava2:rxjava:2.1.3’<br>    compile ‘io.reactivex.rxjava2:rxandroid:2.0.1’<br>    compile ‘com.squareup.retrofit2:retrofit:2.3.0’<br>    compile ‘com.squareup.retrofit2:adapter-rxjava2:2.3.0’<br>    compile ‘com.squareup.retrofit2:converter-gson:2.1.0’<br>    compile ‘com.squareup.okhttp3:okhttp:3.9.0’<br>    compile ‘com.squareup.okhttp3:logging-interceptor:3.9.0’</p>
+<p><strong>第一步 rx + retrofi 实现网络交互</strong></p>
+<p>ApiService.class 提供网络接口</p>
+<p>public interface ApiService {</p>
+<pre><code>@GET(&quot;/news/get-news&quot;)
+Observable&lt;NewsList&gt; getNewsList(@Query(&quot;tableNum&quot;) int tableNum, @Query(&quot;page&quot;)  int page, @Query(&quot;pagesize&quot;)  int pageSize);
+</code></pre><p>}</p>
+<p>RetrofitHelper.class retofit配置文件</p>
+<p>public class RetrofitHelper {</p>
+<pre><code>private static final String TAG = RetrofitHelper.class.getName();
+private static RetrofitHelper mRetrofitManage;
+private Retrofit mRetrofit;
+private ApiService service;
+
+private RetrofitHelper() {
+}
+
+public static RetrofitHelper getInstance() {
+    if (mRetrofitManage == null) {
+        synchronized (RetrofitHelper.class) {
+            if (mRetrofitManage == null) {
+                mRetrofitManage = new RetrofitHelper();
+            }
+        }
+    }
+    return mRetrofitManage;
+}
+private OkHttpClient getOkHttpClient() {
+    //日志显示级别
+    HttpLoggingInterceptor.Level level= HttpLoggingInterceptor.Level.BODY;
+    //新建log拦截器
+    HttpLoggingInterceptor loggingInterceptor=new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
+        @Override
+        public void log(String message) {
+            Logger.d(TAG,message);
+        }
+    });
+    loggingInterceptor.setLevel(level);
+    //定制OkHttp
+    OkHttpClient.Builder httpClientBuilder = new OkHttpClient
+            .Builder();
+    //OkHttp进行添加拦截器loggingInterceptor
+    httpClientBuilder.addInterceptor(loggingInterceptor);
+    return httpClientBuilder.build();
+}
+/**
+ * 获取retrofit对象
+ */
+private Retrofit getRetrofit() {
+    if (null == mRetrofit) {
+        mRetrofit = new Retrofit.Builder()
+                .baseUrl(Constant.BASE_URL)
+                .client(getOkHttpClient())
+                .addConverterFactory(GsonConverterFactory.create())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .build();
+    }
+    return mRetrofit;
+}
+
+public ApiService getService() {
+    if (service == null) {
+        service = getRetrofit().create(ApiService.class);
+    }
+    return service;
+}
+</code></pre><p>}</p>
+<p><strong>第二步 实现Mvp</strong></p>
+<p><strong>首先是BasePresenter.class</strong></p>
+<p>public class BasePresenter<t> {</t></p>
+<pre><code>private Reference&lt;T&gt; mViewReference = null;
+
+public void onAttach(T view) {
+    mViewReference = new WeakReference&lt;T&gt;(view);
+}
+
+public T getView() {
+    return mViewReference.get();
+}
+
+public boolean isAttach() {
+    return null != mViewReference &amp;&amp; null != mViewReference.get();
+}
+
+public void onDettach() {
+    if (null != mViewReference) {
+        mViewReference.clear();
+        mViewReference = null;
+    }
+}
+</code></pre><p>}</p>
+<p><strong>再看看它的实现类NewListPresenter.class</strong></p>
+<p>public class NewsListPresenter extends BasePresenter<inewslistview> {</inewslistview></p>
+<pre><code>private INewsListModle modle;
+private int page = 1, tableNum = 1;
+private int pageSize = 10;
+private boolean isLoadMore = false;
+
+public NewsListPresenter(INewsListView view) {
+    onAttach(view);
+    modle = new NewsListModle();
+}
+
+public int getTableNum() {
+    return tableNum;
+}
+
+public boolean isLoadMore() {
+    return isLoadMore;
+}
+
+public void getNewsList() {
+    modle.getNewsList(tableNum, page, pageSize, new OnResponeListener&lt;NewsList&gt;() {
+        @Override
+        public void success(NewsList newsList) {
+            getView().hideRefresh();
+            getView().getNewsListSucces(newsList.getData());
+        }
+
+        @Override
+        public void failed(String s) {
+            getView().fail(s);
+        }
+    });
+}
+
+public void refresh() {
+    isLoadMore = false;
+    page = 1;
+    getView().showRefresh();
+    getNewsList();
+}
+
+public void loadMore() {
+    isLoadMore = true;
+    page++;
+    getNewsList();
+}
+
+public void selectTableNum(int num){
+    isLoadMore = false;
+    page = 1;
+    this.tableNum = num;
+    getView().selectTableNum();
+    getNewsList();
+}
+</code></pre><p>}</p>
+<p><strong>接下来INewsListModle.class，比较简单，主要是看它的实现类NewsListModle.class</strong></p>
+<p>public interface INewsListModle {</p>
+<pre><code>void getNewsList(int tableNum, int page,int pageSize, OnResponeListener listener);
+</code></pre><p>}</p>
+<p><strong>实现类NewsListModle.class</strong></p>
+<p>public class NewsListModle implements INewsListModle {</p>
+<pre><code>@Override
+public void getNewsList(int tanleNum, int page,int pageSize, final OnResponeListener listener) {
+    RetrofitHelper.getInstance().getService().getNewsList(tanleNum,page, pageSize).
+            subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(new Observer&lt;NewsList&gt;() {
+                @Override
+                public void onSubscribe(@NonNull Disposable d) {
+
+                }
+
+                @Override
+                public void onNext(@NonNull NewsList newsList) {
+                    listener.success(newsList);
+                }
+
+                @Override
+                public void onError(@NonNull Throwable e) {
+                    listener.failed(e.toString());
+                }
+
+                @Override
+                public void onComplete() {
+
+                }
+            });
+}
+</code></pre><p>}<br><strong>最后就是View，INewsListView.class</strong></p>
+<p>public interface INewsListView {</p>
+<pre><code>void getNewsListSucces(List&lt;NewsList.Data&gt; newsList);
+void fail(String msg);
+void showRefresh();
+void hideRefresh();
+void selectTableNum();
+</code></pre><p>}</p>
+<p>好了，有问题的大家可以留言给我哦</p>
+
+            </div>
+
+            <!-- Post Comments -->
+            
+    <!-- 使用 DISQUS_CLICK -->
+<div id="disqus-comment">
+    <div id="disqus_thread"></div>
+
+<!-- add animation -->
+<style>
+	.disqus_click_btn {
+            line-height: 30px;
+            margin: 0;
+            min-width: 50px;
+            padding: 0 14px;
+            display: inline-block;
+            font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+            font-size: 14px;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 0;
+            overflow: hidden;
+            will-change: box-shadow;
+            transition: box-shadow .2s cubic-bezier(.4, 0, 1, 1), background-color .2s cubic-bezier(.4, 0, .2, 1), color .2s cubic-bezier(.4, 0, .2, 1);
+            outline: 0;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            vertical-align: middle;
+            border: 0;
+            background: rgba(158, 158, 158, .2);
+            box-shadow: 0 2px 2px 0 rgba(0, 0, 0, .14), 0 3px 1px -2px rgba(0, 0, 0, .2), 0 1px 5px 0 rgba(0, 0, 0, .12);
+            color: #fff;
+            background-color: #7EC0EE;
+            text-shadow: 0
+        }
+</style>
+	
+<div class="btn_click_load" id="disqus_bt"> 
+    <button class="disqus_click_btn">点击查看评论</button>
+</div>
+
+<!--
+<script type="text/javascript">
+$('.btn_click_load').click(function() {
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'http-miccall-tech'; // required: replace example with your forum shortname
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+
+    document.getElementById('disqus_bt').style.display = "none";
+});
+</script>
+-->
+<script type="text/javascript">
+    var disqus_config = function () {
+        this.page.url = 'http://yoursite.com/2017/09/23/android +Rxjava2++retrofit2+mvp实例/';  // Replace PAGE_URL with your page's canonical URL variable
+        this.page.identifier = 'http://yoursite.com/2017/09/23/android +Rxjava2++retrofit2+mvp实例/'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+    };
+</script>
+
+<script type="text/javascript">
+    $('.btn_click_load').click(function() {  //click to load comments
+        (function() { // DON'T EDIT BELOW THIS LINE
+            var d = document;
+            var s = d.createElement('script');
+            s.src = '//http-miccall-tech.disqus.com/embed.js';
+            s.setAttribute('data-timestamp', + new Date());
+            (d.head || d.body).appendChild(s);
+        })();
+        $('.btn_click_load').css('display','none');
+    });
+</script>
+</div>
+<style>
+    #disqus-comment{
+        background-color: #eee;
+        padding: 2pc;
+    }
+</style>
+
+
+        </div>
+        <!-- Copyright 版权 start -->
+                <div id="copyright">
+            <ul>
+                <li>&copy;Powered By <a href="https://hexo.io/zh-cn/" style="border-bottom: none;">hexo</a></li>
+                <li>Design: <a href="https://huanghaiyuan.github.io/" style="border-bottom: none;">HuangHaiYuan</a></li>
+            </ul>
+            
+            	<span id="busuanzi_container_site_pv">2017总访问量<span id="busuanzi_value_site_pv"></span>次</span>
+			
+        </div>
+    </div>
+</body>
+
+
+
+ 	
+</html>
